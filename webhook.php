@@ -32,14 +32,13 @@ $logEntry .= "PARSED \$_GET:" . PHP_EOL . print_r($_GET, true) . PHP_EOL;
 $logEntry .= "PARSED \$_REQUEST:" . PHP_EOL . print_r($_REQUEST, true) . PHP_EOL;
 $logEntry .= str_repeat('-', 60) . PHP_EOL . PHP_EOL;
 
-$writeResult = @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
-
-if ($writeResult === false) {
-    // If writing failed, at least try to report it via response (won't be seen by Tilda, but helps manual testing)
-    http_response_code(200);
-    echo "log_write_failed";
-    exit;
+// Write to stderr line by line — php -S forwards stderr straight to Render's Logs tab
+foreach (explode(PHP_EOL, $logEntry) as $line) {
+    fwrite(STDERR, $line . PHP_EOL);
 }
+
+// Also try to write to a file, in case it's useful locally
+@file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 
 http_response_code(200);
 echo "ok";
